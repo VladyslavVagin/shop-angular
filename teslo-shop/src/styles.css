@@ -2,3 +2,20 @@
 @plugin "daisyui" {
     themes: night --default
 }
+
+@theme {
+    --font-montserrat: 'Montserrat Alternates', sans-serif;
+    --animate-fadeIn: fadeIn 0.9s ease-in-out;
+
+    @keyframes fadeIn {
+    0% {opacity: 0},
+    100% {opacity: 1}
+  }
+}
+
+@layer base {
+    @font-face {
+      font-family: 'Montserrat Alternates';
+      src: url('/assets/fonts/montserrat/MontserratAlternates-Medium.ttf') format('truetype');
+    }
+}
