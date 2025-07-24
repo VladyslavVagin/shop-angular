@@ -14,7 +14,8 @@
                 <li><a routerLink="/gender/kids" class="btn btn-ghost" routerLinkActive="text-secondary">Niños</a></li>
             </ul>
         </div>
-        <a routerLink="/" class="btn btn-ghost text-xl font-montserrat">Teslo <span class="text-secondary">| Shop</span></a>
+        <a routerLink="/" class="btn btn-ghost text-xl font-montserrat">Teslo <span class="text-secondary">|
+                Shop</span></a>
     </div>
     <div class="navbar-center hidden lg:flex">
         <ul class="menu menu-horizontal px-1">
@@ -23,7 +24,14 @@
             <li><a routerLink="/gender/kids" class="btn btn-ghost" routerLinkActive="text-secondary">Niños</a></li>
         </ul>
     </div>
-    <div class="navbar-end">
-        <a class="btn">Button</a>
+    <div class="navbar-end gap-4">
+        @if(authService.authStatus() === 'authenticated') {
+        <button class="btn btn-ghost">{{authService.user()?.fullName}}</button>
+        <button (click)="authService.logout()" class="btn btn-sm btn-error">Salir</button>
+        } @else if (authService.authStatus() === 'not-authenticated') {
+            <a routerLink="/auth/login" class="btn btn-primary">Login</a>
+        } @else {
+            <button class="btn btn-ghost loading">...</button>
+        }
     </div>
 </div>
