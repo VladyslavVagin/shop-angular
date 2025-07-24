@@ -9,3 +9,5 @@
         <p class="text-center col-span-full">No hay productos disponibles</p>
     }
 </div>
+
+<app-pagination [currentPage]="paginationService.currentPage()" [pages]="productsResource.value()?.pages ?? 0" />
