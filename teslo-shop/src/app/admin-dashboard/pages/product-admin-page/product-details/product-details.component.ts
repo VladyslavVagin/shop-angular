@@ -67,6 +67,8 @@ export class ProductDetailsComponent implements OnInit {
     }
 
     console.log({productLike});
-    this.productService.updateProduct(productLike);
+    this.productService.updateProduct(this.product().id, productLike).subscribe(product => {
+      console.log("Product updated successfully:", product);
+    });
   }
 }
