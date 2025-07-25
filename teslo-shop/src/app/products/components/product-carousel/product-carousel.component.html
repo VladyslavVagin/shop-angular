@@ -6,6 +6,10 @@
         <div class="swiper-slide">
             <img class="w-full object-cover animate-fadeIn" [src]="image | productImage" alt="Producto">
         </div>
+     } @empty {
+        <div class="swiper-slide">
+            <img class="w-full object-cover animate-fadeIn" [src]="'' | productImage" alt="No hay imágenes">
+        </div>
      }
   </div>
   <!-- If we need pagination -->

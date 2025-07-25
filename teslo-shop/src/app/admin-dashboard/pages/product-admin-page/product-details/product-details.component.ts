@@ -1,22 +1,30 @@
-import { Component, inject, input, OnInit } from '@angular/core';
+import { Component, inject, input, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import type { Product } from '@products/interfaces/product.interface';
 import { ProductCarouselComponent } from '@products/components/product-carousel/product-carousel.component';
 import { FormUtils } from '@utils/form-utils';
-import { FormErrorLabelComponent } from "@shared/components/form-error-label/form-error-label.component";
+import { FormErrorLabelComponent } from '@shared/components/form-error-label/form-error-label.component';
 import { ProductsService } from '@products/services/products.service';
+import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'product-details',
-  imports: [ProductCarouselComponent, ReactiveFormsModule, FormErrorLabelComponent],
+  imports: [
+    ProductCarouselComponent,
+    ReactiveFormsModule,
+    FormErrorLabelComponent,
+  ],
   templateUrl: './product-details.component.html',
 })
 export class ProductDetailsComponent implements OnInit {
+  router = inject(Router);
   productService = inject(ProductsService);
   product = input.required<Product>();
   fb = inject(FormBuilder);
   sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+  wasSaved = signal<boolean>(false);
 
   productForm = this.fb.group({
     title: ['', Validators.required],
@@ -56,19 +64,34 @@ export class ProductDetailsComponent implements OnInit {
     this.productForm.patchValue({ tags: formLike.tags?.join(', ') });
   }
 
-  onSubmit() {
+  async onSubmit() {
     const isValid = this.productForm.valid;
     this.productForm.markAllAsTouched();
     if (!isValid) return;
     const formValue = this.productForm.value;
     const productLike: Partial<Product> = {
       ...(formValue as any),
-      tags: formValue.tags?.toLowerCase().split(',').map(tag => tag.trim()),
+      tags: formValue.tags
+        ?.toLowerCase()
+        .split(',')
+        .map((tag) => tag.trim()),
+    };
+
+    if (this.product().id === 'new') {
+      // Crear producto nuevo
+      const product = await firstValueFrom(
+        this.productService.createProduct(productLike)
+      );
+      this.router.navigate(['/admin/products', product.id]);
+    } else {
+      await firstValueFrom(
+        this.productService.updateProduct(this.product().id, productLike)
+      );
     }
 
-    console.log({productLike});
-    this.productService.updateProduct(this.product().id, productLike).subscribe(product => {
-      console.log("Product updated successfully:", product);
-    });
+    this.wasSaved.set(true);
+    setTimeout(() => {
+      this.wasSaved.set(false);
+    }, 3000);
   }
 }
