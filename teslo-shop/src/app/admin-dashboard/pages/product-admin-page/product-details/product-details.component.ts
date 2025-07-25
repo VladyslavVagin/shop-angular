@@ -5,6 +5,7 @@ import type { Product } from '@products/interfaces/product.interface';
 import { ProductCarouselComponent } from '@products/components/product-carousel/product-carousel.component';
 import { FormUtils } from '@utils/form-utils';
 import { FormErrorLabelComponent } from "@shared/components/form-error-label/form-error-label.component";
+import { ProductsService } from '@products/services/products.service';
 
 @Component({
   selector: 'product-details',
@@ -12,6 +13,7 @@ import { FormErrorLabelComponent } from "@shared/components/form-error-label/for
   templateUrl: './product-details.component.html',
 })
 export class ProductDetailsComponent implements OnInit {
+  productService = inject(ProductsService);
   product = input.required<Product>();
   fb = inject(FormBuilder);
   sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
@@ -56,6 +58,15 @@ export class ProductDetailsComponent implements OnInit {
 
   onSubmit() {
     const isValid = this.productForm.valid;
-    console.log(this.productForm.value, { isValid });
+    this.productForm.markAllAsTouched();
+    if (!isValid) return;
+    const formValue = this.productForm.value;
+    const productLike: Partial<Product> = {
+      ...(formValue as any),
+      tags: formValue.tags?.toLowerCase().split(',').map(tag => tag.trim()),
+    }
+
+    console.log({productLike});
+    this.productService.updateProduct(productLike);
   }
 }
