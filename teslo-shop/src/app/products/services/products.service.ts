@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable, of, tap } from 'rxjs';
+import { forkJoin, map, Observable, of, switchMap, tap } from 'rxjs';
 import {
   Gender,
   type Product,
@@ -81,11 +81,20 @@ export class ProductsService {
 
   updateProduct(
     id: string,
-    productLike: Partial<Product>
+    productLike: Partial<Product>,
+    imageFileList?: FileList
   ): Observable<Product> {
-    return this.http
-      .patch<Product>(`${baseUrl}/products/${id}`, productLike)
-      .pipe(tap((product) => this.updateProductCache(product)));
+    const currentImages = productLike.images ?? [];
+    return this.uploadImages(imageFileList).pipe(
+      map((imageNames) => ({
+        ...productLike,
+        images: [...currentImages, ...imageNames],
+      })),
+      switchMap((updatedProduct) =>
+        this.http.patch<Product>(`${baseUrl}/products/${id}`, updatedProduct)
+      ),
+      tap((product) => this.updateProductCache(product))
+    );
   }
 
   updateProductCache(product: Product) {
@@ -99,9 +108,49 @@ export class ProductsService {
     });
   }
 
-  createProduct(productLike: Partial<Product>): Observable<Product> {
+  createProduct(
+    productLike: Partial<Product>,
+    imageFileList?: FileList
+  ): Observable<Product> {
+    const currentImages = productLike.images ?? [];
+    return this.uploadImages(imageFileList).pipe(
+      map((imageNames) => ({
+        ...productLike,
+        images: [...currentImages, ...imageNames],
+      })),
+      switchMap((updatedProduct) => this.http.post<Product>(`${baseUrl}/products`, updatedProduct)),
+      tap((product) => this.updateProductCache(product))
+    );
+  }
+
+  // Tome un FileList y lo sube
+  uploadImages(images?: FileList): Observable<string[]> {
+    if (!images) return of([]);
+    const uploadObservables = Array.from(images!).map((imageFile) =>
+      this.uploadImage(imageFile)
+    );
+    return forkJoin(uploadObservables);
+  }
+
+  uploadImage(imageFile: File): Observable<string> {
+    if (!imageFile) {
+      throw new Error('No file provided');
+    }
+    
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    if (!validTypes.includes(imageFile.type)) {
+      throw new Error(`Invalid file type: ${imageFile.type}. Only JPEG, PNG, and GIF are allowed.`);
+    }
+    
+    const formData = new FormData();
+    formData.append('file', imageFile, imageFile.name);
+    
     return this.http
-      .post<Product>(`${baseUrl}/products`, productLike)
-      .pipe(tap((product) => this.updateProductCache(product)));
+      .post<{ fileName: string; secureUrl: string }>(`${baseUrl}/files/product`, formData)
+      .pipe(
+        tap(response => console.log('Upload successful:', response)),
+        map((response) => response.fileName)
+      );
   }
 }
