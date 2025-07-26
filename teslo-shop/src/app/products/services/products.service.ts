@@ -133,16 +133,6 @@ export class ProductsService {
   }
 
   uploadImage(imageFile: File): Observable<string> {
-    if (!imageFile) {
-      throw new Error('No file provided');
-    }
-    
-    // Validate file type
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-    if (!validTypes.includes(imageFile.type)) {
-      throw new Error(`Invalid file type: ${imageFile.type}. Only JPEG, PNG, and GIF are allowed.`);
-    }
-    
     const formData = new FormData();
     formData.append('file', imageFile, imageFile.name);
     
